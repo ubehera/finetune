@@ -20,5 +20,8 @@ unsloth/experiments/*/results/samples/*.txt
 __pycache__/
 *.pyc
 
+# Unsloth compiled-kernel cache (written next to scripts at runtime)
+**/unsloth_compiled_cache/
+
 # OS
 .DS_Store
