@@ -129,12 +129,10 @@ derived from the held-out chapter:
   novel's world. None of that vocabulary appeared in the input prompt —
   the model learned it from the training corpus.
 
-**Important caveat.** The actual sample text is not included in this
-public repository because it contains verbatim and style-imitated passages
-from an unpublished novel. A reader of this document cannot independently
-verify the qualitative claim above; that verification was done locally by
-the experiment's author. The quantitative perplexity result is independently
-reproducible from the code and any comparable corpus.
+Sample text is not included in this public repository. The qualitative
+comparison above was verified locally by the experiment's author; a reader
+of this document is taking it on trust. The quantitative perplexity result
+is independently reproducible from the code with any comparable corpus.
 
 ---
 
