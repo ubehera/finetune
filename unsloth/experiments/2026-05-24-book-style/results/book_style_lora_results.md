@@ -8,7 +8,7 @@ readers without prior machine-learning background.
 ## What This Test Was
 
 We took an off-the-shelf AI text generator and spent eight minutes teaching
-it to write in the specific style of one unpublished novel. Two independent
+it to write in the specific style of one private prose corpus. Two independent
 checks — a numerical measurement and a side-by-side sample comparison —
 both confirmed the training had a real, measurable effect. The whole thing
 ran on a single desktop workstation.
@@ -32,7 +32,7 @@ Skim or skip if these are familiar.
   runs. Models that don't fit can't run. The workstation here has 121 GB of
   it; the 4B model used 13 GB.
 - **Training corpus.** The collection of text we want the model to learn
-  from. In this experiment: one unpublished novel, around 139,000 words.
+  from. In this experiment: one private prose corpus of around 139,000 words.
 - **Fine-tuning.** Adjusting a pre-trained model so it does better on a
   specific kind of text, without retraining from scratch.
 - **LoRA (Low-Rank Adaptation).** A specific, cheap form of fine-tuning.
@@ -70,10 +70,11 @@ Lower is better. Ratios are what we compare.
 
 ## The Setup
 
-- **Training corpus:** One unpublished novel, Book 1 (~139,000 words across
-  10 chapters). Chapters 1–9 were used as the study material; chapter 10
-  was held back as an exam the model never saw during training.
-- **Starting model:** `Qwen3-4B`. No knowledge of this specific novel.
+- **Training corpus:** One private prose corpus (~139,000 words across
+  10 chapters of structured scenes). Chapters 1–9 were used as the study
+  material; chapter 10 was held back as an exam the model never saw
+  during training.
+- **Starting model:** `Qwen3-4B`. No knowledge of this specific corpus.
 - **Method:** LoRA fine-tuning. Five passes through the training material
   (one pass = the model reads the whole training set once and slightly
   adjusts its added dials). After each pass, a snapshot of the model's
@@ -122,12 +123,12 @@ derived from the held-out chapter:
 - **Prompt 2 and Prompt 3:** Just a scene header — character name and
   location — asking the model to invent the scene from scratch. *Outcome:*
   The original model invented a generic fantasy or sci-fi setting,
-  unrelated to the source novel; in one case it wrote stage directions for
-  a screenplay rather than novel prose. The trained model wrote novel-style
-  prose, used the correct point-of-view character, named the right
-  locations, and referenced procedural terms specific to the source
-  novel's world. None of that vocabulary appeared in the input prompt —
-  the model learned it from the training corpus.
+  unrelated to the source corpus; in one case it wrote stage directions for
+  a screenplay rather than narrative prose. The trained model wrote fluent
+  narrative prose, used the correct point-of-view character, named the
+  right locations, and referenced procedural terms specific to the source
+  corpus's world. None of that vocabulary appeared in the input prompt —
+  the model learned it from the training data.
 
 Sample text is not included in this public repository. The qualitative
 comparison above was verified locally by the experiment's author; a reader
@@ -138,10 +139,10 @@ is independently reproducible from the code with any comparable corpus.
 
 ## What This Test Does Not Show
 
-- **Whether the trained model still works well on text outside the novel.**
-  This was not measured. LoRA fine-tuning is generally believed to leave
-  the original model's behavior on out-of-domain text mostly intact, but
-  that was not directly tested here.
+- **Whether the trained model still works well on text outside this
+  corpus.** This was not measured. LoRA fine-tuning is generally believed
+  to leave the original model's behavior on out-of-domain text mostly
+  intact, but that was not directly tested here.
 - **Whether five passes was the right number.** Three or four passes might
   have produced similar results in less time; more than five might have
   caused the model to memorize rather than generalize. The perplexity drop
