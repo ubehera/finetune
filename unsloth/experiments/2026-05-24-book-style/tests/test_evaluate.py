@@ -84,10 +84,29 @@ def test_enumerate_adapters_handles_no_checkpoints_no_best():
         assert result == [("base", None)]
 
 
+from evaluate import _build_sample_prompts
+
+
+def test_build_sample_prompts_grounded_and_header_only():
+    scenes = [
+        "[Book 1, Chapter 10, Scene 1 — POV: Mira, Location: Bridge]\n\nFirst para.\n\nSecond para.",
+        "[Book 1, Chapter 10, Scene 2 — POV: Voss, Location: CIC]\n\nScene 2 body.",
+        "[Book 1, Chapter 10, Scene 3 — POV: Mira, Location: Hangar]\n\nScene 3 body.",
+    ]
+    prompts = _build_sample_prompts(scenes)
+    assert [p[0] for p in prompts] == ["sample_1", "sample_2", "sample_3"]
+    assert prompts[0][1].endswith("First para.")
+    assert "Second para." not in prompts[0][1]
+    assert prompts[1][1].endswith("Location: CIC]\n\n")
+    assert "Scene 2 body" not in prompts[1][1]
+    assert prompts[2][1].endswith("Location: Hangar]\n\n")
+
+
 if __name__ == "__main__":
     test_ppl_zero_loss_is_one()
     test_ppl_uniform_logits_matches_vocab_size()
     test_ppl_ignores_minus_100_labels()
     test_enumerate_adapters_sorts_by_integer_step_not_lex()
     test_enumerate_adapters_handles_no_checkpoints_no_best()
-    print("OK: all evaluate.py PPL tests passed")
+    test_build_sample_prompts_grounded_and_header_only()
+    print("OK: all evaluate.py tests passed")

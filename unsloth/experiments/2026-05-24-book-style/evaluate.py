@@ -106,6 +106,81 @@ def _enumerate_adapters(adapters_root: pathlib.Path) -> list[tuple[str, Optional
     return out
 
 
+# --- sample generation ------------------------------------------------
+
+def _read_val_scenes(jsonl_path: str) -> list[str]:
+    rows: list[str] = []
+    for line in pathlib.Path(jsonl_path).read_text(encoding="utf-8").splitlines():
+        if not line.strip():
+            continue
+        rows.append(json.loads(line)["text"])
+    return rows
+
+
+def _build_sample_prompts(val_scenes: list[str]) -> list[tuple[str, str]]:
+    """Return three (label, prompt) pairs from the val scenes.
+
+    Sample 1: header + first paragraph of scene 1 (text up to but not
+              including the first blank line after the header).
+    Samples 2 and 3: header alone for scenes 2 and 3.
+    """
+    if len(val_scenes) < 3:
+        raise ValueError(f"need 3 val scenes for sampling, got {len(val_scenes)}")
+    s1 = val_scenes[0]
+    head_end = s1.index("\n\n")
+    body = s1[head_end + 2 :]
+    first_para_end = body.find("\n\n")
+    first_para = body if first_para_end == -1 else body[:first_para_end]
+    p1 = s1[: head_end + 2] + first_para
+    s2 = val_scenes[1]
+    p2 = s2[: s2.index("\n\n") + 2]
+    s3 = val_scenes[2]
+    p3 = s3[: s3.index("\n\n") + 2]
+    return [("sample_1", p1), ("sample_2", p2), ("sample_3", p3)]
+
+
+@torch.no_grad()
+def _generate_greedy(model, tokenizer, prompt: str, max_new_tokens: int) -> str:
+    inputs = tokenizer(prompt, return_tensors="pt").to(next(model.parameters()).device)
+    out_ids = model.generate(
+        **inputs,
+        max_new_tokens=max_new_tokens,
+        do_sample=False,
+        num_beams=1,
+        repetition_penalty=1.0,
+        pad_token_id=tokenizer.eos_token_id,
+    )
+    return tokenizer.decode(out_ids[0], skip_special_tokens=True)
+
+
+def _generate_samples_and_write(
+    model_name: str, adapters_root: pathlib.Path, val_jsonl: pathlib.Path,
+    out_dir: pathlib.Path, max_seq_len: int, max_new_tokens: int,
+) -> None:
+    val_scenes = _read_val_scenes(str(val_jsonl))
+    prompts = _build_sample_prompts(val_scenes)
+    samples_dir = out_dir / "samples"
+    samples_dir.mkdir(parents=True, exist_ok=True)
+
+    base_model, base_tok = _load_base_or_adapter(model_name, max_seq_len, None)
+    for label, prompt in prompts:
+        text = _generate_greedy(base_model, base_tok, prompt, max_new_tokens)
+        (samples_dir / f"{label}_base.txt").write_text(text, encoding="utf-8")
+    del base_model
+    torch.cuda.empty_cache()
+
+    best = adapters_root / "best"
+    if not best.exists():
+        print(f"[eval] WARN: {best} missing; skipping LoRA samples")
+        return
+    lora_model, lora_tok = _load_base_or_adapter(model_name, max_seq_len, best)
+    for label, prompt in prompts:
+        text = _generate_greedy(lora_model, lora_tok, prompt, max_new_tokens)
+        (samples_dir / f"{label}_lora.txt").write_text(text, encoding="utf-8")
+    del lora_model
+    torch.cuda.empty_cache()
+
+
 def main(args: argparse.Namespace) -> int:
     data_dir = pathlib.Path(args.data).expanduser()
     adapters_root = pathlib.Path(args.adapters).expanduser()
@@ -125,5 +200,13 @@ def main(args: argparse.Namespace) -> int:
     (out_dir / "ppl_table.json").write_text(json.dumps(ppl_table, indent=2))
     print(json.dumps(ppl_table, indent=2))
 
-    # Sample generation is added in Task 8.
+    _generate_samples_and_write(
+        model_name=args.model,
+        adapters_root=adapters_root,
+        val_jsonl=data_dir / "val.jsonl",
+        out_dir=out_dir,
+        max_seq_len=args.max_seq_len,
+        max_new_tokens=args.gen_tokens,
+    )
+    print(f"[eval] wrote samples to {out_dir/'samples'}/")
     return 0
