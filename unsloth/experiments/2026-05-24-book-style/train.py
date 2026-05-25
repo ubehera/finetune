@@ -42,7 +42,7 @@ def _pack_text_to_chunks(tokenizer, jsonl_path: str, max_seq_len: int) -> Datase
         all_ids.append(eos)
     n_full = (len(all_ids) // max_seq_len) * max_seq_len
     chunks = [all_ids[i : i + max_seq_len] for i in range(0, n_full, max_seq_len)]
-    return Dataset.from_dict({"input_ids": chunks, "labels": [list(c) for c in chunks]})
+    return Dataset.from_dict({"input_ids": chunks})
 
 
 def main(args: argparse.Namespace) -> int:
@@ -120,12 +120,12 @@ def main(args: argparse.Namespace) -> int:
     t_train_start = time.perf_counter()
     result = trainer.train()
     t_train = time.perf_counter() - t_train_start
+    peak_mem_gb = torch.cuda.max_memory_allocated() / (1024 ** 3)
 
     best_dir = out_dir / "best"
     model.save_pretrained(str(best_dir))
     tokenizer.save_pretrained(str(best_dir))
 
-    peak_mem_gb = torch.cuda.max_memory_allocated() / (1024 ** 3)
     stats = {
         "framework": "unsloth+peft+transformers",
         "model": args.model,
