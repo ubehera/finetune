@@ -1,0 +1,68 @@
+[project]
+name = "edgexpert-finetune"
+version = "0.1.0"
+description = "BF16 LoRA fine-tuning stack for the EdgeXpert (GB10 / sm_120 / ARM64)"
+requires-python = ">=3.12"
+dependencies = [
+    # Pinned by index below: PyTorch nightly cu130 with sm_120 support.
+    # unsloth_zoo pins torch<2.13.0; uv's resolver excludes our 2.13.0.dev under
+    # that ceiling, so a fresh `uv sync` will install torch 2.12.0.dev (also
+    # cu130, also sm_121-capable). To keep the exact 2.13.0.dev validated during
+    # the smoke run, run.sh uses --no-sync. If you ever do a real `uv sync`,
+    # re-validate the model loads cleanly on the 2.12 nightly.
+    "torch",
+    "triton",
+    # torchvision is imported by unsloth_zoo.vision_utils but not used for text
+    # fine-tuning; nightly cu130 has no aarch64 wheel, so we ship a tiny stub at
+    # ./stubs/torchvision/ on PYTHONPATH (see unsloth.env).
+    # If you ever need real vision support, rebuild from source.
+    # Hugging Face core. Cap transformers <5 — unsloth 2026.5.7's monkey-patching
+    # was verified against 4.57.x; 5.x is a major API break.
+    "transformers>=4.51.3,<5",
+    "datasets",
+    "accelerate",
+    "peft",
+    "trl",
+    # tokenizers / sentencepiece for non-fast tokenizers
+    "sentencepiece",
+    "protobuf",
+    # Observability
+    "tensorboard",
+    # Note on bitsandbytes: was transitive via PyPI unsloth, but unsloth's git
+    # source doesn't pull it in. Unsloth still does `import bitsandbytes as bnb`
+    # unconditionally (see _utils.py:1219), so we must list it explicitly. On
+    # ARM64 + sm_120 the GPU ops may not work; we use BF16-only LoRA. The mere
+    # import has to succeed for unsloth to load; runtime ops are not used.
+    "bitsandbytes",
+    #
+    # Unsloth source: the PyPI wheels (<=2026.5.7) pin torch<2.11.0 in METADATA
+    # which conflicts with our torch 2.13.0+cu130 nightly. The git HEAD has no
+    # unconditional torch constraint, so we install from git via the source
+    # override below. We also need Qwen3 support (model_type "qwen3") which only
+    # landed post-2025.2.4. unsloth_zoo is a peer dep that must match unsloth's
+    # git commit; pin both.
+    "unsloth>=2025.2.4",
+    "unsloth_zoo>=2026.5.4",
+]
+
+[tool.uv]
+# pyproject's project = this directory; tell uv we're not packaging it.
+package = false
+# Restrict resolution to non-darwin: unsloth_zoo transitively depends on mlx-vlm
+# (darwin/arm64 only), which requires transformers>=5.1.0. We pin transformers<5
+# to keep unsloth's monkeypatching working — incompatible with the darwin branch.
+# Since the project only runs on Linux (GB10 ARM64), this is safe.
+environments = ["sys_platform == 'linux'"]
+
+[tool.uv.sources]
+torch = { index = "pytorch-nightly-cu130" }
+triton = { index = "pytorch-nightly-cu130" }
+# Pin to git refs that were validated during the 2026-05-24 smoke run. Update
+# these in lockstep when bumping unsloth (run apply-hotfixes.sh after upgrade).
+unsloth = { git = "https://github.com/unslothai/unsloth.git", rev = "eeb49d54b8d801a1ce922fa15f778e2bad205db0" }
+unsloth_zoo = { git = "https://github.com/unslothai/unsloth-zoo.git", rev = "b9fc0585ff0608c45ed482c2ce44eb5b341206a6" }
+
+[[tool.uv.index]]
+name = "pytorch-nightly-cu130"
+url = "https://download.pytorch.org/whl/nightly/cu130"
+explicit = true
