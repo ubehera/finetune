@@ -1344,7 +1344,7 @@ done | less
 ```
 
 Check:
-- Samples 2 and 3 (header-only): does the LoRA output sound like Hard MilSF in your book's voice (technical register, characteristic vocabulary, named POV character appearing)? Or does it produce header-noise / generic continuation?
+- Samples 2 and 3 (header-only): does the LoRA output sound like your source corpus's register and voice (genre-appropriate vocabulary, named POV character appearing)? Or does it produce header-noise / generic continuation?
 - Sample 1 (grounded): does LoRA stay on tone better than base?
 
 Record one observation per sample in a new `results/notes.md`.

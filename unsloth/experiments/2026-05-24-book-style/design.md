@@ -37,7 +37,7 @@ downstream work.
 
 ### Source data
 
-Fiction-corpus Book 1, sourced from
+A private prose corpus, sourced from
 `~/projects/scriptorium/canon/fiction_corpus.sqlite`:
 
 - 46 scenes across 10 chapters
@@ -243,9 +243,9 @@ plus `claude-tmux-books`; isolating training to node-2 avoids contention.
 **Qualitative:**
 
 - LoRA samples — especially the two header-only prompts (sample 2 and 3) —
-  read recognizably more like Hard MilSF in the book's voice than the base
-  outputs: technical register, characteristic vocabulary, named POV
-  character or location appearing somewhere in the generation.
+  read recognizably in the source corpus's register and voice rather than
+  the base model's default: technical or genre-specific vocabulary, named
+  POV character or location appearing somewhere in the generation.
 
 **Diagnostic outcomes:**
 
