@@ -57,6 +57,8 @@ def _pack_text_to_chunks(tokenizer, jsonl_path: str, max_seq_len: int) -> list[l
 
 @torch.no_grad()
 def _model_ppl_on_chunks(model, tokenizer, chunks: list[list[int]]) -> tuple[float, float]:
+    if not chunks:
+        raise ValueError("chunks is empty — check val.jsonl path and packing")
     device = next(model.parameters()).device
     total_ce_sum = 0.0
     total_tokens = 0
@@ -69,7 +71,7 @@ def _model_ppl_on_chunks(model, tokenizer, chunks: list[list[int]]) -> tuple[flo
         n_tok = labels.numel()
         total_ce_sum += ce * n_tok
         total_tokens += n_tok
-    mean_ce = total_ce_sum / max(total_tokens, 1)
+    mean_ce = total_ce_sum / total_tokens
     return math.exp(mean_ce), mean_ce
 
 
@@ -92,7 +94,10 @@ def _enumerate_adapters(adapters_root: pathlib.Path) -> list[tuple[str, Optional
     out: list[tuple[str, Optional[pathlib.Path]]] = [("base", None)]
     ckpt_root = adapters_root / "checkpoints"
     if ckpt_root.exists():
-        ckpts = sorted(p for p in ckpt_root.iterdir() if p.is_dir() and p.name.startswith("checkpoint-"))
+        ckpts = sorted(
+            (p for p in ckpt_root.iterdir() if p.is_dir() and p.name.startswith("checkpoint-")),
+            key=lambda p: int(p.name.split("-")[-1]),
+        )
         for i, p in enumerate(ckpts, start=1):
             out.append((f"epoch_{i}", p))
     best = adapters_root / "best"

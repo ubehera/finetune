@@ -43,8 +43,51 @@ def test_ppl_ignores_minus_100_labels():
     assert abs(ce - math.log(vocab)) < 1e-4
 
 
+import pathlib as _pl
+import tempfile as _tf
+
+from evaluate import _enumerate_adapters
+
+
+def test_enumerate_adapters_sorts_by_integer_step_not_lex():
+    """Five 5-epoch run at ~21 steps/epoch produces checkpoint-105 > checkpoint-21
+    by integer, but checkpoint-105 < checkpoint-21 lexicographically. The function
+    must return ascending integer-step order.
+    """
+    with _tf.TemporaryDirectory() as tmp:
+        root = _pl.Path(tmp) / "lora-output"
+        ckpts = root / "checkpoints"
+        ckpts.mkdir(parents=True)
+        # Intentionally create them out of "lex" order to ensure sort logic runs
+        for step in (105, 21, 42, 84, 63):
+            (ckpts / f"checkpoint-{step}").mkdir()
+        (root / "best").mkdir()
+
+        result = _enumerate_adapters(root)
+        # Expected: base, then 5 epoch entries by step, then best
+        labels = [label for label, _ in result]
+        assert labels == ["base", "epoch_1", "epoch_2", "epoch_3", "epoch_4", "epoch_5", "best"], labels
+        # The first (epoch_1) checkpoint must be step 21 (not step 105, the lex-sort winner)
+        epoch_1_path = result[1][1]
+        assert epoch_1_path.name == "checkpoint-21", f"epoch_1 got {epoch_1_path.name}; sort is still lex"
+        # Last epoch must be step 105
+        epoch_5_path = result[5][1]
+        assert epoch_5_path.name == "checkpoint-105", f"epoch_5 got {epoch_5_path.name}"
+
+
+def test_enumerate_adapters_handles_no_checkpoints_no_best():
+    """Empty lora-output -> only ('base', None)."""
+    with _tf.TemporaryDirectory() as tmp:
+        root = _pl.Path(tmp) / "lora-output"
+        root.mkdir()
+        result = _enumerate_adapters(root)
+        assert result == [("base", None)]
+
+
 if __name__ == "__main__":
     test_ppl_zero_loss_is_one()
     test_ppl_uniform_logits_matches_vocab_size()
     test_ppl_ignores_minus_100_labels()
+    test_enumerate_adapters_sorts_by_integer_step_not_lex()
+    test_enumerate_adapters_handles_no_checkpoints_no_best()
     print("OK: all evaluate.py PPL tests passed")
