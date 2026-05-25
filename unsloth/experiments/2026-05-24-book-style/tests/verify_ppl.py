@@ -24,7 +24,13 @@ def main() -> int:
     if not others:
         print("no non-base PPL entries to compare", file=sys.stderr)
         return 2
-    best_label = min(others, key=lambda k: others[k]["ce"])
+    # Prefer the explicit "best" entry (written by evaluate.py from the
+    # load_best_model_at_end-selected adapter); fall back to a CE scan if
+    # missing so this script still works on older tables.
+    if "best" in others:
+        best_label = "best"
+    else:
+        best_label = min(others, key=lambda k: others[k]["ce"])
     best_ppl = others[best_label]["ppl"]
     ratio = best_ppl / base_ppl
     print(f"base ppl       = {base_ppl:.4f}")
