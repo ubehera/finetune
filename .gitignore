@@ -9,6 +9,7 @@ flash-attn-src/*.egg-info/
 # experiment outputs (preserve dirs via .gitkeep, ignore contents)
 unsloth/experiments/*/data/*.jsonl
 unsloth/experiments/*/lora-output/*/
+unsloth/experiments/*/lora-output/*.json
 unsloth/experiments/*/results/ppl_table.json
 unsloth/experiments/*/results/samples/*.txt
 
