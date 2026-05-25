@@ -1,0 +1,23 @@
+{
+  "framework": "unsloth+peft+transformers",
+  "model": "Qwen/Qwen3-4B",
+  "epochs": 1,
+  "lr": 0.0001,
+  "batch_size": 2,
+  "grad_accum": 1,
+  "lora_r": 16,
+  "lora_alpha": 32,
+  "max_seq_len": 1024,
+  "train_chunks": 168,
+  "val_chunks": 9,
+  "load_seconds": 84.74,
+  "train_seconds": 97.36,
+  "peak_gpu_memory_gib": 10.55,
+  "final_train_loss": 3.0308,
+  "torch_version": "2.13.0.dev20260503+cu130",
+  "device": "NVIDIA GB10",
+  "compute_capability": [
+    12,
+    1
+  ]
+}

@@ -10,4 +10,4 @@ set -euo pipefail
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="$(cd "$DIR/../.." && pwd)"
 export PYTHONPATH="$ROOT/stubs:${PYTHONPATH:-}"
-exec uv run --project "$ROOT" python "$DIR/lora_test.py" "$@"
+exec uv run --project "$ROOT" --no-sync python "$DIR/lora_test.py" "$@"
