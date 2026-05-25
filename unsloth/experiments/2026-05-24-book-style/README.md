@@ -24,3 +24,16 @@ Inspect `results/ppl_table.json` and `results/samples/sample_{1..3}_{base,lora}.
 - Parent `../../` venv populated by `uv sync` and patched by `../../apply-hotfixes.sh`.
 - Read access to `~/projects/scriptorium/canon/fiction_corpus.sqlite`.
 - One GB10 node (target: node-2).
+
+## Results (2026-05-24)
+
+| Metric | Value |
+|--------|------:|
+| Base PPL on val | 30.3406 |
+| Best LoRA PPL on val | 14.2714 |
+| Ratio (best/base) | 0.4704 |
+| Train seconds | 486.16 |
+| Peak GPU memory (GiB) | 13.15 |
+
+Pass/fail vs success criteria: see `design.md` § "Success criteria".
+Qualitative notes: `results/notes.md`.
